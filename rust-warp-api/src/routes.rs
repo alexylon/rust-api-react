@@ -1,6 +1,5 @@
 use std::convert::Infallible;
 use warp::{self, Filter};
-
 use crate::db::Db;
 use crate::handlers;
 use crate::models::Customer;
@@ -20,21 +19,33 @@ pub fn customer_routes(
 fn customers_list(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_header("content-type")
+        .allow_methods(vec!["GET", "POST", "DELETE"]);
+
     warp::path("customers")
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::list_customers)
+        .with(cors)
 }
 
 /// POST /customers
 fn create_customer(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_header("content-type")
+        .allow_methods(vec!["GET", "POST", "DELETE"]);
+
     warp::path("customers")
         .and(warp::post())
         .and(json_body())
         .and(with_db(db))
         .and_then(handlers::create_customer)
+        .with(cors)
 }
 
 /// GET /customers/{guid}

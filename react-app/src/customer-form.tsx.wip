@@ -1,0 +1,96 @@
+import React, { useEffect, useState, SetStateAction } from 'react'
+// import { useForm, FieldError } from 'react-hook-form'
+import { DialogContent, DialogContentText, DialogTitle, TextField } from '@material-ui/core'
+// import { DocumentNode } from 'graphql'
+import CommonForm from './common/components/common-form'
+// import { personSchema } from '../../common/validation/person-schema'
+// import { Person } from 'common/gql/subscription/person-subscription'
+
+type PropTypes = {
+    // mutation: DocumentNode
+    buttonIcon: object
+    dialogTitle: string
+    dialogContentText: string
+    clearOnClose: boolean
+    person?: Person
+}
+
+type FormData = {
+    firstName: FieldError
+    lastName: FieldError
+}
+
+export default function PersonForm({
+                                       // mutation,
+                                       person,
+                                       buttonIcon,
+                                       dialogTitle,
+                                       dialogContentText,
+                                       clearOnClose,
+                                   }: PropTypes) {
+    const [personId, setPersonId] = useState()
+    const [firstName, setFirstName] = useState('')
+    const [lastName, setLastName] = useState('')
+
+    useEffect(() => {
+        if (person) {
+            setPersonId(person.id)
+            setFirstName(person.first_name)
+            setLastName(person.last_name)
+        }
+    }, [person])
+
+    const clearForm = () => {
+        setFirstName('')
+        setLastName('')
+    }
+
+    const { register, handleSubmit, errors } = useForm<FormData>({
+        validationSchema: personSchema,
+    })
+
+    return (
+        <CommonForm
+            mutation={mutation}
+            mutationParams={{
+                personId,
+                firstName,
+                lastName,
+            }}
+            buttonIcon={buttonIcon}
+            handleSubmit={handleSubmit}
+            clearForm={clearForm}
+            clearOnClose={clearOnClose}>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogContent>
+                <DialogContentText>{dialogContentText}</DialogContentText>
+                <TextField
+                    inputRef={register}
+                    autoFocus
+                    name="firstName"
+                    margin="dense"
+                    id="firstName"
+                    label="First Name"
+                    type="text"
+                    defaultValue={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    fullWidth
+                />
+                {errors.firstName && <span>{errors.firstName.message}</span>}
+                <TextField
+                    inputRef={register}
+                    autoFocus
+                    name="lastName"
+                    margin="dense"
+                    id="lastName"
+                    label="Last Name"
+                    type="text"
+                    defaultValue={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    fullWidth
+                />
+                {errors.lastName && <span>{errors.lastName.message}</span>}
+            </DialogContent>
+        </CommonForm>
+    )
+}

@@ -1,0 +1,98 @@
+import React, {useState} from 'react'
+// import _ from 'lodash'
+// import {useMutation} from '@apollo/react-hooks'
+import {Button, Dialog, DialogActions, IconButton, makeStyles} from '@mui/material'
+import {Close} from '@mui/icons-material'
+// import {DocumentNode} from 'graphql'
+
+import Snackbars from './snackbars'
+
+const useStyles = makeStyles((theme: any) => ({
+    closeButton: {
+        position: 'absolute',
+        right: theme.spacing(1),
+        top: theme.spacing(1),
+        color: theme.palette.grey[500],
+    },
+}))
+
+type PropTypes = {
+    // mutation: DocumentNode
+    // mutationParams: object
+    children: any
+    handleSubmit: any
+    buttonIcon: object
+    clearForm?: () => void
+    clearOnClose?: boolean
+}
+
+export default function CommonForm({
+                                       // mutation,
+                                       // mutationParams,
+                                       buttonIcon,
+                                       handleSubmit,
+                                       clearForm,
+                                       clearOnClose,
+                                       children,
+                                   }: PropTypes): any {
+    const classes = useStyles()
+    const [open, setOpen] = useState(false)
+    const [notification, setNotification] = useState({message: '', type: ''})
+    const showNotification = (message: string, type: string) => {
+        setNotification({message, type})
+    }
+    const openHandler = () => setOpen(true)
+    const closeHandler = () => {
+        setOpen(false)
+        if (clearOnClose) {
+            if (!_.isFunction(clearForm)) {
+                throw new Error('Please provide `clearForm` function to clear form on close')
+            }
+            if (clearForm) {
+                clearForm()
+            }
+        }
+    }
+    const [sendMutation, options] = useMutation(mutation, {
+        onCompleted: (data: any) => {
+            console.log('onCompleted', {data})
+            showNotification('Done!', 'success')
+            closeHandler()
+        },
+        onError: (error: any) => {
+            console.log('onError', {error})
+            showNotification(error.message, 'error')
+            openHandler()
+        },
+    })
+
+    return (
+        <>
+            <IconButton color="primary" className="button" onClick={openHandler}>
+                {buttonIcon}
+            </IconButton>
+            <Dialog open={open} onClose={closeHandler} aria-labelledby="common-form" fullWidth>
+                <IconButton aria-label="close" className={classes.closeButton} onClick={closeHandler}>
+                    <Close/>
+                </IconButton>
+                <form
+                    onSubmit={handleSubmit(async (data: any, e: { preventDefault: () => void }) => {
+                        e.preventDefault()
+                        console.log('before-submit-mutation', {data, mutationParams})
+                        await sendMutation({variables: mutationParams})
+                    })}>
+                    <div className="form-contents">{children}</div>
+                    <DialogActions>
+                        <Button onClick={closeHandler} color="secondary">
+                            Cancel
+                        </Button>
+                        <Button color="primary" type="submit" autoFocus>
+                            Submit
+                        </Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
+            <Snackbars type={notification.type} message={notification.message}/>
+        </>
+    )
+}
